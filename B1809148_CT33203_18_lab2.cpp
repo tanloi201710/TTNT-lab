@@ -28,10 +28,11 @@ const char* action[] = {"Trang thai bat dau",
 //1. Dinh nghia trang thai cua bai toan
 struct State {
 	int num[BOARD_ROWS][BOARD_COLS];
-	int empty_row;		// Luu chi muc dong cua o trong
-	int empty_col;		// Luu chi muc cot cua o trong
+	int empty_row;		
+	int empty_col;		
 };
 
+// Ham in trang thai
 void print_state(State s) {
 	for(int row = 0; row < BOARD_ROWS; row++) {
 		for(int col = 0; col < BOARD_COLS; col++) {
@@ -245,30 +246,11 @@ int heuristic(State s1, State s2, int func) {
 
 //3.3 Khai bao cac ham can thiet phuc vu cho ham chinh
 
-int find_state_in_queue(State state, queue<Node*> q) {
-	while(!q.empty()) {
-		if(compareStates(q.front()->state, state))
-			return 1;
-		q.pop();
-	}
-	return 0;
-}
-
-
 int find_state_in_priority_queue(State state, priority_queue<Node*, vector<Node*>, node_cmp> q) {
 	while(!q.empty()) {
 		if(compareStates(q.top()->state, state))
 			return 1;
 		q.pop();
-	}
-	return 0;
-}
-
-int find_state_in_stack(State state, stack<Node*> s) {
-	while(!s.empty()) {
-		if(compareStates(s.top()->state, state))
-			return 1;
-		s.pop();
 	}
 	return 0;
 }
@@ -284,127 +266,10 @@ Node* find_node(State state, priority_queue<Node*, vector<Node*>, node_cmp> q) {
 
 //3.4. Cai dat cac giai thuat. 
 
-/*
-***********************
-    A. TÌM KIẾM MÙ
-***********************
-*/
-
-//3.4.1. Thuat toan duyet theo chieu rong
-Node* BFS(State init_state, State goal_state){
-		
-	// Khai bao hai hang doi Open va Close
-	queue<Node*> Open_BFS;
-	queue<Node*> Close_BFS;
-	int step = 0;
-	
-	// Tao nut trang thai cha
-	Node* root = (Node*)malloc(sizeof(Node));
-	root->state = init_state;
-	root->parent = NULL;
-	root->no_function = 0;
-	Open_BFS.push(root);
-	while(!Open_BFS.empty()){
-		
-		printf("\n");
-		printf("\nOpen BFS: %d", Open_BFS.size());
-		printf("\nClose BFS: %d", Close_BFS.size());
-		
-		Node* node = Open_BFS.front();	// Lay ra gia tri BEN TRAI cua Open de kiem tra
-		Open_BFS.pop();
-		Close_BFS.push(node);
-		
-		// Kiem  tra xem dinh lay ra co phai la trang thai muc tieu
-		if(compareStates(node->state, goal_state))
-		{
-			printf("\nTong so nut trong Open la: %d", Open_BFS.size());
-			printf("\nTong so nut trong Close la: %d", Close_BFS.size());
-			return node;
-		}
-		
-		
-		// Goi cac phep toan tren trang thai
-		int option;
-		for(option=1; option<=MAX_OP; option++) {
-			State newstate;
-			
-			if(call_operator(node->state, newstate, option)) {
-				
-				// Neu trang thai moi sinh ra da ton tai thi bo qua
-				if(find_state_in_queue(newstate, Open_BFS) || find_state_in_queue(newstate, Close_BFS))
-					continue;
-					
-				// Neu trang thai moi chua ton tai thi them vao hang doi
-				//printf("\nTrang thai moi duoc dua vao hang doi OPEN\n");
-				//print_state(newstate);
-				Node *newNode = (Node*)malloc(sizeof(Node));
-				newNode->state = newstate;
-				newNode->parent = node;
-				newNode->no_function = option;
-				Open_BFS.push(newNode);
-			}
-		}
-	}
-	return NULL;
-}
-
-//3.4.2. Giai thuat duyet theo chieu sau
-Node* DFS(State init_state, State goal_state){
-	
-	// Khai bao hai ngan xep Open va Close
-	stack<Node*> Open_DFS;
-	stack<Node*> Close_DFS;
-	
-	// Tao nut trang thai cha
-	Node* root = (Node*)malloc(sizeof(Node));
-	root->state = init_state;
-	root->parent = NULL;
-	root->no_function = 0;
-	Open_DFS.push(root);
-	while(!Open_DFS.empty()){
-		
-		printf("\n");
-		printf("\nOpen BFS: %d", Open_DFS.size());
-		printf("\nClose BFS: %d", Close_DFS.size());
-		
-		// Lay mot dinh trong ngan xep
-		Node* node = Open_DFS.top();
-		Open_DFS.pop();
-		Close_DFS.push(node);
-		
-		// Kiem  tra xem dinh lay ra co phai la trang thai muc tieu
-		if(compareStates(node->state, goal_state))
-		{
-			printf("\nTong so nut trong Open la: %d", Open_DFS.size());
-			printf("\nTong so nut trong Close la: %d", Close_DFS.size());
-			return node;
-		}
-			
-		int option;
-		// Goi cac phep toan tren trang thai
-		for(option=1; option<=MAX_OP; option++) {
-			State newstate;
-			if(call_operator(node->state, newstate, option)) {
-				
-				// Neu trang thai moi sinh ra da ton tai thi bo qua
-				if(find_state_in_stack(newstate, Open_DFS) || find_state_in_stack(newstate, Close_DFS))
-					continue;
-					
-				// Neu trang thai moi chua ton tai thi them vao ngan xep
-				Node *newNode = (Node*)malloc(sizeof(Node));
-				newNode->state = newstate;
-				newNode->parent = node;
-				newNode->no_function = option;
-				Open_DFS.push(newNode);
-			}
-		}
-	}
-	return NULL;
-}
 
 /*
 *******************************
-    A. TÌM KIẾM HEURISTIC
+    B. TÌM KIẾM HEURISTIC
 *******************************
 */
 
@@ -412,10 +277,6 @@ Node* DFS(State init_state, State goal_state){
 
 Node* Astart(State init_state, State goal_state, int func){
 		
-	// Khai bao hai hang doi Open va Close
-	// Khac voi BFS, trong giai thuat Greedy cung nhu Best First Search,
-	// chung ta su dung Hang Doi Uu Tien (xem giao trinh trang 59) 
-	// (sap xep thu tu dua tren gia tri f cua cac node)
 	priority_queue<Node*, vector<Node*>, node_cmp> priority_queue_Open; 
 	priority_queue<Node*, vector<Node*>, node_cmp> priority_queue_Close;
 	int step = 0;
@@ -435,7 +296,7 @@ Node* Astart(State init_state, State goal_state, int func){
 		printf("\nOpen BFS: %d", priority_queue_Open.size());
 		printf("\nClose BFS: %d", priority_queue_Close.size());
 		
-		Node* node = priority_queue_Open.top();	// Lay ra gia tri BEN TRAI cua Open de kiem tra
+		Node* node = priority_queue_Open.top();
 		priority_queue_Open.pop();
 		priority_queue_Close.push(node);
 		
@@ -450,7 +311,6 @@ Node* Astart(State init_state, State goal_state, int func){
 		
 		
 		// Goi cac phep toan tren trang thai
-		//printf("\n");
 		int option;
 		for(option=1; option<=MAX_OP; option++) {
 			State newstate;
@@ -487,26 +347,6 @@ Node* Astart(State init_state, State goal_state, int func){
 
 //3.5. Xay dung ham de in cac hanh dong de dat den trang thai muc tieu
 
-void print_WaysToGetGoal(Node* node) {
-	stack<Node*> stackPrint;
-	
-	// Duyet nguoc ve nut parent
-	while(node->parent != NULL) {
-		stackPrint.push(node);
-		node = node->parent;
-	}
-	stackPrint.push(node);
-	
-	// In ra thu tu hanh dong
-	int no_action = 0;
-	while(!stackPrint.empty()){
-		printf("\nAction %d: %s\n", no_action, action[stackPrint.top()->no_function]);
-		print_state(stackPrint.top()->state);
-		stackPrint.pop();
-		no_action++;
-	}
-}
-
 void print_WaysToGetGoal_with_Heuristic(Node* node) {
 	int no_action = 0;
 	stack<Node*> stackPrint;
@@ -535,39 +375,18 @@ int main() {
 	State *start_state;
 	
 	// Khai bao trang thai bat dau.
-	// Trang thai bat dau duoc cau hinh trong file test.txt
 	start_state = read_file("start_easy.txt");
 	printf("Trang thai bat dau: \n");
 	print_state(*start_state);
 	
 	
 	// Khai bao trang thai muc tieu.
-	// Trang thai muc tieu duoc cau hinh trong file goal.txt
 	State *goal_state;
 	goal_state = read_file("goal_easy.txt");
 	printf("\n");
 	printf("Trang thai muc tieu: \n");
 	print_state(*goal_state);
 
-    // // Tìm kiếm mù
-    // Tìm kiếm theo chiều rộng
-    printf("\n");
-	printf("*** Su dung giai thuat BFS ***");
-	Node* bfs_result = BFS(*start_state, *goal_state);
-	printf("\n");
-	print_WaysToGetGoal(bfs_result);
-	printf("\n*** Ket thuc giai thuat BFS ***\n");
-	
-	
-	// Tìm kiếm theo chiều sâu
-	printf("\n");
-	printf("*** Su dung giai thuat DFS ***");
-	Node* dfs_result = DFS(*start_state, *goal_state);
-	printf("\n");
-	print_WaysToGetGoal(dfs_result);
-	printf("\n*** Ket thuc giai thuat DFS ***\n");
-
-	
 	// // Tim kiem Heuristic - Giai thuat Asao
 	
 
@@ -586,8 +405,6 @@ int main() {
 	
 	
 	// Giai phong bo nho
-    delete bfs_result;
-    delete dfs_result;
 	delete astart_h1_result;
     delete astart_h2_result;
 	delete start_state;
